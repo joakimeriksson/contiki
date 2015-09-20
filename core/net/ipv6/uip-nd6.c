@@ -193,7 +193,7 @@ ns_input(void)
         if(nbr == NULL) {
           uip_ds6_nbr_add(&UIP_IP_BUF->srcipaddr,
 			  (uip_lladdr_t *)&nd6_opt_llao[UIP_ND6_OPT_DATA_OFFSET],
-			  0, NBR_STALE);
+			  0, NBR_STALE, NBR_TABLE_REASON_IPV6_ND, NULL);
         } else {
           uip_lladdr_t *lladdr = (uip_lladdr_t *)uip_ds6_nbr_get_ll(nbr);
           if(memcmp(&nd6_opt_llao[UIP_ND6_OPT_DATA_OFFSET],
@@ -624,7 +624,7 @@ rs_input(void)
       if((nbr = uip_ds6_nbr_lookup(&UIP_IP_BUF->srcipaddr)) == NULL) {
         /* we need to add the neighbor */
         uip_ds6_nbr_add(&UIP_IP_BUF->srcipaddr,
-                        (uip_lladdr_t *)&nd6_opt_llao[UIP_ND6_OPT_DATA_OFFSET], 0, NBR_STALE);
+                        (uip_lladdr_t *)&nd6_opt_llao[UIP_ND6_OPT_DATA_OFFSET], 0, NBR_STALE, NBR_TABLE_REASON_IPV6_ND, NULL);
       } else {
         /* If LL address changed, set neighbor state to stale */
         if(memcmp(&nd6_opt_llao[UIP_ND6_OPT_DATA_OFFSET],
@@ -632,7 +632,7 @@ rs_input(void)
           uip_ds6_nbr_t nbr_data = *nbr;
           uip_ds6_nbr_rm(nbr);
           nbr = uip_ds6_nbr_add(&UIP_IP_BUF->srcipaddr,
-                                (uip_lladdr_t *)&nd6_opt_llao[UIP_ND6_OPT_DATA_OFFSET], 0, NBR_STALE);
+                                (uip_lladdr_t *)&nd6_opt_llao[UIP_ND6_OPT_DATA_OFFSET], 0, NBR_STALE, NBR_TABLE_REASON_IPV6_ND, NULL);
           nbr->reachable = nbr_data.reachable;
           nbr->sendns = nbr_data.sendns;
           nbr->nscount = nbr_data.nscount;
@@ -861,7 +861,7 @@ ra_input(void)
       if(nbr == NULL) {
         nbr = uip_ds6_nbr_add(&UIP_IP_BUF->srcipaddr,
                               (uip_lladdr_t *)&nd6_opt_llao[UIP_ND6_OPT_DATA_OFFSET],
-			      1, NBR_STALE);
+			      1, NBR_STALE, NBR_TABLE_REASON_IPV6_ND, NULL);
       } else {
         uip_lladdr_t *lladdr = (uip_lladdr_t *)uip_ds6_nbr_get_ll(nbr);
         if(nbr->state == NBR_INCOMPLETE) {
