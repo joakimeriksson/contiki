@@ -113,13 +113,14 @@ rpl_purge_routes(void)
   uip_ds6_route_t *r;
   uip_ipaddr_t prefix;
   rpl_dag_t *dag;
+  uint8_t nopath;
 #if RPL_CONF_MULTICAST
   uip_mcast6_route_t *mcast_route;
 #endif
 
   /* First pass, decrement lifetime */
   r = uip_ds6_route_head();
-
+  nopath = 0;
   while(r != NULL) {
     if(r->state.lifetime >= 1) {
       /*
@@ -128,6 +129,9 @@ rpl_purge_routes(void)
        * which would delete lifetime <= 1
        */
       r->state.lifetime--;
+    }
+    if(RPL_ROUTE_SEND_NOPATH(r)) {
+      nopath++;
     }
     r = uip_ds6_route_next(r);
   }
@@ -142,21 +146,46 @@ rpl_purge_routes(void)
       uip_ipaddr_copy(&prefix, &r->ipaddr);
       uip_ds6_route_rm(r);
       r = uip_ds6_route_head();
-      PRINTF("No more routes to ");
+      PRINTF("Timeout of RPL route to ");
       PRINT6ADDR(&prefix);
       dag = default_instance->current_dag;
       /* Propagate this information with a No-Path DAO to preferred parent if we are not a RPL Root */
       if(dag->rank != ROOT_RANK(default_instance)) {
         PRINTF(" -> generate No-Path DAO\n");
         dao_output_target(dag->preferred_parent, &prefix, RPL_ZERO_LIFETIME);
-        /* Don't schedule more than 1 No-Path DAO, let next iteration handle that */
+        /* Don't send more than 1 No-Path DAO, let next iteration handle that */
         return;
       }
       PRINTF("\n");
-    } else {
-      r = uip_ds6_route_next(r);
+    } else if(RPL_ROUTE_SEND_NOPATH(r)) {
+      /* Here we are currently under de-regitration of children that are
+         moving to a new parent */
+      RPL_ROUTE_CLEAR_SEND_NOPATH(r);
+      /* we have cleared a no-path */
+      nopath--;
+
+      if(r->state.dag != NULL && r->state.dag->last_parent != NULL) {
+        uip_ipaddr_copy(&prefix, &r->ipaddr);
+        PRINTF("Sending No-Path for children to previous parent: ");
+        PRINT6ADDR(&prefix);
+        PRINTF("\n");
+        /* Don't send more than 1 No-Path DAO, let next iteration handle that */
+        dao_output_target(r->state.dag->last_parent,
+                          &prefix, RPL_ZERO_LIFETIME);
+        if(nopath == 0) {
+          printf("No-Path - no more de-registrations for this old parent\n");
+          r->state.dag->last_parent = NULL;
+        }
+        return;
+      }
+      /* even if we did not send anything - we remove the parent */
+      if(nopath == 0) {
+        r->state.dag->last_parent = NULL;
+      }
     }
+    r = uip_ds6_route_next(r);
   }
+
 
 #if RPL_CONF_MULTICAST
   mcast_route = uip_mcast6_route_list_head();
@@ -173,6 +202,21 @@ rpl_purge_routes(void)
 #endif
 }
 /*---------------------------------------------------------------------------*/
+void
+rpl_unregister_routes(rpl_dag_t *dag)
+{
+  uip_ds6_route_t *r;
+  r = uip_ds6_route_head();
+
+  while(r != NULL) {
+    if(r->state.dag == dag) {
+      RPL_ROUTE_SET_SEND_NOPATH(r);
+      r->state.lifetime = DAO_EXPIRATION_TIMEOUT;
+    }
+    r = uip_ds6_route_next(r);
+  }
+}
+
 void
 rpl_remove_routes(rpl_dag_t *dag)
 {

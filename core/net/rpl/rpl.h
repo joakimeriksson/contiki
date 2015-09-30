@@ -139,6 +139,7 @@ struct rpl_dag {
   /* live data for the DAG */
   uint8_t joined;
   rpl_parent_t *preferred_parent;
+  rpl_parent_t *last_parent;
   rpl_rank_t rank;
   struct rpl_instance *instance;
   rpl_prefix_t prefix_info;

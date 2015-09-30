@@ -87,6 +87,9 @@
 #define RPL_OPTION_SOLICITED_INFO        7
 #define RPL_OPTION_PREFIX_INFO           8
 #define RPL_OPTION_TARGET_DESC           9
+/* This is just used for searching for any RPL option - if the RFC / IANA
+   specify 0xff as a used option we need to change the function */
+#define RPL_OPTION_FIND_ANY              0xff
 
 #define RPL_DAO_K_FLAG                   0x80 /* DAO ACK requested */
 #define RPL_DAO_D_FLAG                   0x40 /* DODAG ID present */
@@ -322,6 +325,7 @@ void rpl_recalculate_ranks(void);
 
 /* RPL routing table functions. */
 void rpl_remove_routes(rpl_dag_t *dag);
+void rpl_unregister_routes(rpl_dag_t *dag);
 void rpl_remove_routes_by_nexthop(uip_ipaddr_t *nexthop, rpl_dag_t *dag);
 uip_ds6_route_t *rpl_add_route(rpl_dag_t *dag, uip_ipaddr_t *prefix,
                                int prefix_len, uip_ipaddr_t *next_hop);

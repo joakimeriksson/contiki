@@ -96,6 +96,7 @@ void uip_ds6_notification_rm(struct uip_ds6_notification *n);
 #define RPL_ROUTE_ENTRY_NOPATH_RECEIVED   0x01
 #define RPL_ROUTE_ENTRY_DAO_PENDING       0x02
 #define RPL_ROUTE_ENTRY_DAO_NACK          0x04
+#define RPL_ROUTE_ENTRY_SEND_NOPATH       0x08
 
 #define RPL_ROUTE_IS_NOPATH_RECEIVED(route)                             \
   (((route)->state.state_flags & RPL_ROUTE_ENTRY_NOPATH_RECEIVED) != 0)
@@ -117,6 +118,18 @@ void uip_ds6_notification_rm(struct uip_ds6_notification *n);
 #define RPL_ROUTE_SET_DAO_NACKED(route) do {                            \
     (route)->state.state_flags |= RPL_ROUTE_ENTRY_DAO_NACK;             \
   } while(0)
+
+/* Used for children when they are in need of being de-registerd to a
+   previous parent */
+#define RPL_ROUTE_SEND_NOPATH(route)                                  \
+  ((route->state.state_flags & RPL_ROUTE_ENTRY_SEND_NOPATH) != 0)
+#define RPL_ROUTE_SET_SEND_NOPATH(route) do {                            \
+    (route)->state.state_flags |= RPL_ROUTE_ENTRY_SEND_NOPATH;             \
+  } while(0)
+#define RPL_ROUTE_CLEAR_SEND_NOPATH(route) do {                            \
+    (route)->state.state_flags &= ~RPL_ROUTE_ENTRY_SEND_NOPATH;             \
+  } while(0)
+
 
 #define RPL_ROUTE_CLEAR_DAO(route) do {                                 \
     (route)->state.state_flags &= ~(RPL_ROUTE_ENTRY_DAO_NACK|RPL_ROUTE_ENTRY_DAO_PENDING); \

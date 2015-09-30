@@ -52,6 +52,7 @@
 #include "net/ipv6/uip-icmp6.h"
 #include "net/rpl/rpl-private.h"
 #include "net/packetbuf.h"
+#include "random.h"
 #include "net/ipv6/multicast/uip-mcast6.h"
 
 #include <limits.h>
@@ -103,7 +104,6 @@ UIP_ICMP6_HANDLER(dio_handler, ICMP6_RPL, RPL_CODE_DIO, dio_input);
 UIP_ICMP6_HANDLER(dao_handler, ICMP6_RPL, RPL_CODE_DAO, dao_input);
 UIP_ICMP6_HANDLER(dao_ack_handler, ICMP6_RPL, RPL_CODE_DAO_ACK, dao_ack_input);
 /*---------------------------------------------------------------------------*/
-
 void
 rpl_set_downward_link(uint8_t link)
 {
@@ -114,6 +114,30 @@ int
 rpl_has_downward_link()
 {
   return downward;
+}
+
+static int
+next_rpl_subopt(uint8_t type, const uint8_t *buffer, int pos, int buflen,
+                int *subopt_len)
+{
+  uint8_t subopt_type = 0;
+  int len = 0;
+  for(; pos < buflen; pos += len) {
+    subopt_type = buffer[pos];
+    if(subopt_type == RPL_OPTION_PAD1) {
+      len = 1;
+      /* we just do not need to read the padding... so ignore it always */
+      continue;
+    } else {
+      /* Suboption with a two-byte header + payload */
+      len = 2 + buffer[pos + 1];
+    }
+    if(type == RPL_OPTION_FIND_ANY || type == subopt_type) {
+      *subopt_len = len;
+      return pos;
+    }
+  }
+  return -1;
 }
 
 #if RPL_WITH_DAO_ACK
@@ -353,14 +377,13 @@ dio_input(void)
   PRINTF(", %u)\n", dio.preference);
 
   /* Check if there are any DIO suboptions. */
-  for(; i < buffer_length; i += len) {
-    subopt_type = buffer[i];
-    if(subopt_type == RPL_OPTION_PAD1) {
-      len = 1;
-    } else {
-      /* Suboption with a two-byte header + payload */
-      len = 2 + buffer[i + 1];
+  for(;i < buffer_length; i += len) {
+    i = next_rpl_subopt(RPL_OPTION_FIND_ANY, buffer, i, buffer_length, &len);
+    if(i == -1) {
+      /* No more options to handle */
+      break;
     }
+    subopt_type = buffer[i];
 
     if(len + i > buffer_length) {
       PRINTF("RPL: Invalid DIO packet\n");
@@ -657,7 +680,6 @@ dao_input(void)
   uint8_t buffer_length;
   int pos;
   int len;
-  int i;
   int learned_from;
   rpl_parent_t *parent;
   uip_ds6_nbr_t *nbr;
@@ -733,28 +755,38 @@ dao_input(void)
     }
   }
 
+  /* lpos = next_rpl_subopt(RPL_OPTION_TRANSIT, buffer, pos, */
+  /*                        buffer_length, &len); */
+  /* lifetime = buffer[lpos + 5]; */
+
   /* Check if there are any RPL options present. */
-  for(i = pos; i < buffer_length; i += len) {
-    subopt_type = buffer[i];
-    if(subopt_type == RPL_OPTION_PAD1) {
-      len = 1;
-    } else {
-      /* The option consists of a two-byte header and a payload. */
-      len = 2 + buffer[i + 1];
+  for(;pos < buffer_length; pos += len) {
+    pos = next_rpl_subopt(RPL_OPTION_FIND_ANY, buffer, pos,
+                          buffer_length, &len);
+    if(pos == -1) {
+      /* No more options to handle */
+      break;
     }
+    if(len + pos > buffer_length) {
+      PRINTF("RPL: Invalid DAO packet\n");
+      RPL_STAT(rpl_stats.malformed_msgs++);
+      goto discard;
+    }
+
+    subopt_type = buffer[pos];
 
     switch(subopt_type) {
     case RPL_OPTION_TARGET:
       /* Handle the target option. */
-      prefixlen = buffer[i + 3];
+      prefixlen = buffer[pos + 3];
       memset(&prefix, 0, sizeof(prefix));
-      memcpy(&prefix, buffer + i + 4, (prefixlen + 7) / CHAR_BIT);
+      memcpy(&prefix, buffer + pos + 4, (prefixlen + 7) / CHAR_BIT);
       break;
     case RPL_OPTION_TRANSIT:
       /* The path sequence and control are ignored. */
       /*      pathcontrol = buffer[i + 3];
               pathsequence = buffer[i + 4];*/
-      lifetime = buffer[i + 5];
+      lifetime = buffer[pos + 5];
       /* The parent address is also ignored. */
       break;
     }
@@ -809,11 +841,12 @@ dao_input(void)
         uip_icmp6_send(rpl_get_parent_ipaddr(dag->preferred_parent),
                        ICMP6_RPL, RPL_CODE_DAO, buffer_length);
       }
-      if(flags & RPL_DAO_K_FLAG) {
-        /* indicate that we accepted the no-path DAO */
-        dao_ack_output(instance, &dao_sender_addr, sequence,
-               RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
-      }
+    }
+    /* independent if we remove or not - ACK the request */
+    if(flags & RPL_DAO_K_FLAG) {
+      /* indicate that we accepted the no-path DAO */
+      dao_ack_output(instance, &dao_sender_addr, sequence,
+                     RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
     }
     goto discard;
   }
@@ -976,21 +1009,20 @@ dao_output(rpl_parent_t *parent, uint8_t lifetime)
 
   /* Sending a DAO with own prefix as target */
   dao_output_target(parent, &prefix, lifetime);
-  /* keep track of my own sending of DAO for handling ack and loss of ack */
-  instance->my_dao_seqno = dao_sequence;
+
+  if(lifetime != RPL_ZERO_LIFETIME) {
+    /* keep track of my own sending of DAO for handling ack and loss of ack */
+    instance->my_dao_seqno = dao_sequence;
 
 #if RPL_WITH_DAO_ACK
-  instance->my_dao_transmissions = 1;
-  ctimer_set(&instance->dao_retransmit_timer, RPL_DAO_RETRANSMISSION_TIMEOUT,
-	     handle_dao_retransmission, parent);
-  if(lifetime == RPL_ZERO_LIFETIME) {
-    rpl_set_downward_link(0);
+    instance->my_dao_transmissions = 1;
+    ctimer_set(&instance->dao_retransmit_timer, RPL_DAO_RETRANSMISSION_TIMEOUT,
+               handle_dao_retransmission, parent);
+#endif /* RPL_WITH_DAO_ACK */
   }
-#else
   /* We know that we have tried to register so now we are assuming
      that we have a down-link - unless this is a zero lifetime one */
   rpl_set_downward_link(lifetime != RPL_ZERO_LIFETIME);
-#endif /* RPL_WITH_DAO_ACK */
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -1051,7 +1083,8 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
   buffer[pos] |= RPL_DAO_D_FLAG;
 #endif /* RPL_DAO_SPECIFY_DAG */
 #if RPL_WITH_DAO_ACK
-  buffer[pos] |= RPL_DAO_K_FLAG;
+  /* only set the ACK request flag if not zero-lifetime */
+  buffer[pos] |= lifetime == RPL_ZERO_LIFETIME ? 0 : RPL_DAO_K_FLAG;
 #endif /* RPL_WITH_DAO_ACK */
   ++pos;
   buffer[pos++] = 0; /* reserved */
