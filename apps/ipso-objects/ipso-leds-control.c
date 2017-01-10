@@ -120,14 +120,12 @@ write_state(lwm2m_context_t *ctx, const uint8_t *inbuf, size_t insize,
 /*---------------------------------------------------------------------------*/
 static char *
 get_color(int value) {
-  switch(value) {
-  case LEDS_GREEN:
+  if(value == LEDS_GREEN)
     return "Green";
-  case LEDS_RED:
+  if(value == LEDS_RED)
     return "Red";
-  case LEDS_BLUE:
+  if(value == LEDS_BLUE)
     return "Blue";
-  }
   return "None";
 }
 
