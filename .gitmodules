@@ -13,3 +13,6 @@
 [submodule "tools/cooja"]
 	path = tools/cooja
 	url = https://github.com/sics-iot/cooja.git
+[submodule "lib/ext/tinydtls"]
+	path = lib/ext/tinydtls
+	url = https://github.com/sics-iot/tinydtls-standalone.git
