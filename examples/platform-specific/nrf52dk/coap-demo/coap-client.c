@@ -150,7 +150,7 @@ PROCESS_THREAD(er_example_observe_client, ev, data)
   uiplib_ipaddrconv(SERVER_IPV6_ADDR, server_ipaddr);
 
   /* receives all CoAP messages */
-  coap_init_engine();
+  coap_engine_init();
 
 #if PLATFORM_HAS_BUTTON
   SENSORS_ACTIVATE(button_1);
