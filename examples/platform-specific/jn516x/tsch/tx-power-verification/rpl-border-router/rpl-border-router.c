@@ -42,7 +42,7 @@
 #include "net/mac/tsch/tsch-schedule.h"
 #include "net/netstack.h"
 #include "dev/slip.h"
-#include "os/net/app-layer/coap/coap-engine.h"
+#include "coap-engine.h"
 #include "rpl-tools.h"
 
 #include <stdio.h>

@@ -36,7 +36,7 @@
 #include "net/ipv6/uip.h"
 #include "net/linkaddr.h"
 #include "rpl-tools.h"
-#include "os/net/app-layer/coap/coap-engine.h"
+#include "coap-engine.h"
 #include "sys/ctimer.h"
 #include "dev/uart-driver.h"
 #include "uart1.h"

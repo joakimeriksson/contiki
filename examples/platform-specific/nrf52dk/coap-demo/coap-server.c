@@ -51,7 +51,7 @@
 #include <string.h>
 #include "contiki.h"
 #include "contiki-net.h"
-#include "os/net/app-layer/coap/coap-engine.h"
+#include "coap-engine.h"
 #include "uip.h"
 #include "dev/button-sensor.h"
 #include "dev/leds.h"

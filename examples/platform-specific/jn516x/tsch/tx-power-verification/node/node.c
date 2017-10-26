@@ -37,7 +37,7 @@
 #include "net/ipv6/uip.h"
 #include "net/linkaddr.h"
 #include "rpl-tools.h"
-#include "os/net/app-layer/coap/coap-engine.h"
+#include "coap-engine.h"
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <AppHardwareApi.h>

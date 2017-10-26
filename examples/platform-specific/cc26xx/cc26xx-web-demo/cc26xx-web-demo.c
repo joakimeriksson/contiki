@@ -39,7 +39,7 @@
 /*---------------------------------------------------------------------------*/
 #include "contiki.h"
 #include "contiki-net.h"
-#include "os/net/app-layer/coap/coap-engine.h"
+#include "coap-engine.h"
 #include "board-peripherals.h"
 #include "lib/sensors.h"
 #include "lib/list.h"

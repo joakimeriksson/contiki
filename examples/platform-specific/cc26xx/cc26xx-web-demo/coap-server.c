@@ -37,7 +37,7 @@
 /*---------------------------------------------------------------------------*/
 #include "contiki.h"
 #include "contiki-net.h"
-#include "os/net/app-layer/coap/coap-engine.h"
+#include "coap-engine.h"
 #include "board-peripherals.h"
 #include "rf-core/rf-ble.h"
 #include "cc26xx-web-demo.h"

@@ -44,8 +44,8 @@
 #if UIP_CONF_IPV6_RPL_LITE == 0
 #include "rpl-private.h"
 #endif /* UIP_CONF_IPV6_RPL_LITE == 0 */
-#include "os/net/app-layer/coap/coap-engine.h"
-#include "os/net/app-layer/coap/coap.h"
+#include "coap-engine.h"
+#include "coap.h"
 
 #include "ti-lib.h"
 

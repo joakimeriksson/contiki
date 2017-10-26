@@ -42,7 +42,7 @@
  */
 /*---------------------------------------------------------------------------*/
 #include "contiki.h"
-#include "os/net/app-layer/coap/coap-engine.h"
+#include "coap-engine.h"
 #include "dev/leds.h"
 
 #include <string.h>

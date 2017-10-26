@@ -37,8 +37,8 @@
  */
 /*---------------------------------------------------------------------------*/
 #include "contiki.h"
-#include "os/net/app-layer/coap/coap-engine.h"
-#include "os/net/app-layer/coap/coap.h"
+#include "coap-engine.h"
+#include "coap.h"
 #include "net/ipv6/uip-ds6.h"
 #include "coap-server.h"
 #include "cc26xx-web-demo.h"

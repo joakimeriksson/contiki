@@ -40,7 +40,7 @@
 
 #include <string.h>
 #include "contiki.h"
-#include "os/net/app-layer/coap/coap.h"
+#include "coap.h"
 #include "dev/leds.h"
 
 #define DEBUG DEBUG_NONE
