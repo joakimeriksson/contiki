@@ -146,7 +146,7 @@ PROCESS_THREAD(er_example_observe_client, ev, data)
 {
   PROCESS_BEGIN();
   static coap_endpoint_t server_endpoint;
-  coap_endpoint_parse(SERVER_IPV6_EP, &server_endpoint);
+  coap_endpoint_parse(SERVER_IPV6_EP, strlen(SERVER_IPV6_EP), &server_endpoint);
 
   /* receives all CoAP messages */
   coap_engine_init();
