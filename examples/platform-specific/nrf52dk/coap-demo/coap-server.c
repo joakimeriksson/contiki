@@ -63,7 +63,7 @@
  * Resources to be activated need to be imported through the extern keyword.
  * The build system automatically compiles the resources in the corresponding sub-directory.
  */
-extern resource_t res_led3;
+extern coap_resource_t res_led3;
 
 static void
 print_local_addresses(void)
