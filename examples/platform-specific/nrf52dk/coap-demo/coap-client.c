@@ -69,7 +69,6 @@
 #define OBS_LED           LEDS_3
 
 /*----------------------------------------------------------------------------*/
-static uip_ipaddr_t server_ipaddr[1]; /* holds the server ip address */
 static coap_observee_t *obs;
 static struct ctimer ct;
 /*----------------------------------------------------------------------------*/
@@ -147,7 +146,7 @@ PROCESS_THREAD(er_example_observe_client, ev, data)
 {
   PROCESS_BEGIN();
 
-  uiplib_ipaddrconv(SERVER_IPV6_ADDR, server_ipaddr);
+  coap_endpoint_parse(SERVER_IPV6_EP, server_endpoint);
 
   /* receives all CoAP messages */
   coap_engine_init();
@@ -164,7 +163,7 @@ PROCESS_THREAD(er_example_observe_client, ev, data)
     if (ev == sensors_event) {
       if (data == &button_1 && button_1.value(BUTTON_SENSOR_VALUE_STATE) == 0) {
         PRINTF("Starting observation\n");
-        obs = coap_obs_request_registration(server_ipaddr, REMOTE_PORT,
+        obs = coap_obs_request_registration(server_endpoint,
                                             OBS_RESOURCE_URI, notification_callback,
                                             NULL);
       }
