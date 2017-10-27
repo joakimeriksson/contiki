@@ -41,6 +41,7 @@
 #include <string.h>
 #include "contiki.h"
 #include "coap.h"
+#include "coap-engine.h"
 #include "dev/leds.h"
 
 #define DEBUG DEBUG_NONE
