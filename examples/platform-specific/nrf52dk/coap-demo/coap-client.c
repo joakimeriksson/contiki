@@ -51,6 +51,7 @@
 #include "contiki.h"
 #include "contiki-net.h"
 #include "coap-engine.h"
+#include "coap-endpoint.h"
 #include "dev/button-sensor.h"
 #include "dev/leds.h"
 
