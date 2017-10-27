@@ -64,7 +64,6 @@
 #endif
 
 /*----------------------------------------------------------------------------*/
-#define REMOTE_PORT       UIP_HTONS(COAP_DEFAULT_PORT)
 #define OBS_RESOURCE_URI  "lights/led3"
 #define SUBS_LED          LEDS_4
 #define OBS_LED           LEDS_3
@@ -146,8 +145,8 @@ notification_callback(coap_observee_t *obs, void *notification,
 PROCESS_THREAD(er_example_observe_client, ev, data)
 {
   PROCESS_BEGIN();
-
-  coap_endpoint_parse(SERVER_IPV6_EP, server_endpoint);
+  static coap_endpoint_t server_endpoint;
+  coap_endpoint_parse(SERVER_IPV6_EP, &server_endpoint);
 
   /* receives all CoAP messages */
   coap_engine_init();
@@ -164,7 +163,7 @@ PROCESS_THREAD(er_example_observe_client, ev, data)
     if (ev == sensors_event) {
       if (data == &button_1 && button_1.value(BUTTON_SENSOR_VALUE_STATE) == 0) {
         PRINTF("Starting observation\n");
-        obs = coap_obs_request_registration(server_endpoint,
+        obs = coap_obs_request_registration(&server_endpoint,
                                             OBS_RESOURCE_URI, notification_callback,
                                             NULL);
       }
